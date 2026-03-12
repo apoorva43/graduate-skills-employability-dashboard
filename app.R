@@ -102,7 +102,20 @@ ui <- page_sidebar(
     uiOutput("kpi_salary")
   ), 
   
-  "add plots"
+  # Plots 
+  div(
+    style = "display:flex; gap:16px;",
+    card(
+      full_screen = TRUE,
+      card_header("Top Industries by Average Starting Salary"),
+      plotOutput("industries_bar", height = "400px")
+    ),
+    card(
+      full_screen = TRUE,
+      card_header("Yearly Starting Salary by Field of Study"),
+      plotOutput("salary_line", height = "400px")
+    )
+  )
 )
 
 # Server
@@ -162,6 +175,31 @@ server <- function(input, output, session) {
     kpi_card("Avg Starting Salary (USD)", val)
   })
   
+  # Industries bar chart
+  output$industries_bar <- renderPlot({
+    df <- filtered_data()
+    
+    if (nrow(df) == 0) return(NULL)
+    
+    industry_summary <- df |>
+      group_by(Top_Industry) |>
+      summarise(avg_salary = mean(Average_Starting_Salary_USD, 
+                                  na.rm = TRUE)) |>
+      arrange(desc(avg_salary)) |>
+      mutate(Top_Industry = factor(Top_Industry, 
+                                   levels = rev(Top_Industry)))
+    
+    ggplot(industry_summary, 
+           aes(x = avg_salary, y = Top_Industry, fill = Top_Industry)) +
+      geom_col(show.legend = FALSE) +
+      scale_x_continuous(labels = dollar_format()) +
+      labs(x = "Average Starting Salary (USD)", y = NULL) +
+      theme_minimal(base_size = 13) +
+      theme(
+        panel.grid.major.y = element_blank(),
+        axis.text.y = element_text(size = 11)
+      )
+  })
 }
 
 shinyApp(ui, server)
