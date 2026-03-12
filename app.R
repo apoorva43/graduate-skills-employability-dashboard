@@ -200,6 +200,40 @@ server <- function(input, output, session) {
         axis.text.y = element_text(size = 11)
       )
   })
+  
+  # Salary line chart
+  output$salary_line <- renderPlot({
+    df <- filtered_data()
+    
+    if (nrow(df) == 0) return(NULL)
+    
+    salary_over_time <- df |>
+      group_by(Graduation_Year, Field_of_Study) |>
+      summarise(avg_salary = mean(Average_Starting_Salary_USD, 
+                                  na.rm = TRUE),
+                .groups = "drop")
+    
+    ggplot(salary_over_time,
+           aes(x = Graduation_Year, y = avg_salary,
+               color = Field_of_Study, group = Field_of_Study)) +
+      geom_line(linewidth = 1) +
+      geom_point(size = 2) +
+      scale_x_continuous(breaks = unique(salary_over_time$Graduation_Year)) +
+      scale_y_continuous(labels = dollar_format()) +
+      scale_color_brewer(palette = "Set2") +
+      labs(
+        x     = "Graduation Year",
+        y     = "Average Starting Salary (USD)",
+        color = "Field of Study"
+      ) +
+      theme_minimal(base_size = 13) +
+      theme(
+        legend.position  = "top",
+        legend.text      = element_text(size = 10),
+        panel.grid.minor = element_blank(),
+        axis.text.x      = element_text(angle = 45, hjust = 1)
+      )
+  })
 }
 
 shinyApp(ui, server)
