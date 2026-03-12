@@ -7,6 +7,7 @@ library(scales)
 
 # Data
 raw_data <- read_csv("data/processed/processed_data.csv", show_col_types = FALSE)
+
 regions <- sort(unique(na.omit(raw_data$Region)))
 studies <- sort(unique(na.omit(raw_data$Field_of_Study)))
 industries <- sort(unique(na.omit(raw_data$Top_Industry)))
@@ -15,12 +16,10 @@ year_min <- min(raw_data$Graduation_Year, na.rm = TRUE)
 year_max <- max(raw_data$Graduation_Year, na.rm = TRUE)
 
 # KPI card helper
-kpi_card <- function(title, value, subtitle = NULL) {
-  bg <- "#2196F3"
-  
+kpi_card <- function(title, value) {
   div(
     style = paste0(
-      "background:", bg, ";",
+      "background:#2196F3;",
       "color:white;",
       "border-radius:16px;",
       "padding:20px;",
@@ -34,20 +33,22 @@ kpi_card <- function(title, value, subtitle = NULL) {
     div(
       style = "font-size:36px; font-weight:700; line-height:1.1;",
       value
-    ),
-    if (!is.null(subtitle))
-      div(
-        style = "font-size:12px; margin-top:8px; opacity:0.85;",
-        subtitle
-      )
+    )
   )
 }
 
 # UI
 ui <- page_sidebar(
   title = "Graduate Skills Employability Dashboard",
+  theme = bs_theme(
+    bootswatch = "flatly", 
+    base_font = font_google("Inter"),
+    "navbar-padding-y" = "0.3rem",
+    "navbar-brand-font-size" = "1rem"
+  ),
+  
   sidebar = sidebar(
-    width = 280,
+    width = 360, # wider sidebar
     
     selectInput(
       inputId = "region",
@@ -91,20 +92,23 @@ ui <- page_sidebar(
       sep = ""
     ),
     
-    actionButton("reset_btn", "Reset Filters", width = "100%")
+    actionButton("reset_btn", 
+                 "Reset Filters", 
+                 width = "100%",
+                 class = "btn-outline-primary")
   ),
   
   # KPI
-  div(
-    style = "display:flex; gap:16px; margin-bottom:24px;",
+  layout_columns(
+    col_widths = c(4, 4, 4),
     uiOutput("kpi_emp6"),
     uiOutput("kpi_emp12"),
     uiOutput("kpi_salary")
   ), 
   
   # Plots 
-  div(
-    style = "display:flex; gap:16px;",
+  layout_columns(
+    col_widths = c(6, 6),
     card(
       full_screen = TRUE,
       card_header("Top Industries by Average Starting Salary"),
