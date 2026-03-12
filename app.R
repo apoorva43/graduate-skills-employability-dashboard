@@ -14,6 +14,35 @@ degrees <- sort(unique(na.omit(raw_data$Degree_Level)))
 year_min <- min(raw_data$Graduation_Year, na.rm = TRUE)
 year_max <- max(raw_data$Graduation_Year, na.rm = TRUE)
 
+# KPI card helper
+kpi_card <- function(title, value, subtitle = NULL) {
+  bg <- "#2196F3"
+  
+  div(
+    style = paste0(
+      "background:", bg, ";",
+      "color:white;",
+      "border-radius:16px;",
+      "padding:20px;",
+      "text-align:center;",
+      "flex:1;"
+    ),
+    div(
+      style = "font-size:15px; font-weight:500; margin-bottom:8px;",
+      title
+    ),
+    div(
+      style = "font-size:36px; font-weight:700; line-height:1.1;",
+      value
+    ),
+    if (!is.null(subtitle))
+      div(
+        style = "font-size:12px; margin-top:8px; opacity:0.85;",
+        subtitle
+      )
+  )
+}
+
 # UI
 ui <- page_sidebar(
   title = "Graduate Skills Employability Dashboard",
@@ -64,7 +93,16 @@ ui <- page_sidebar(
     
     actionButton("reset_btn", "Reset Filters", width = "100%")
   ),
-  "Plot and KPIs - to add"
+  
+  # KPI
+  div(
+    style = "display:flex; gap:16px; margin-bottom:24px;",
+    uiOutput("kpi_emp6"),
+    uiOutput("kpi_emp12"),
+    uiOutput("kpi_salary")
+  ), 
+  
+  "add plots"
 )
 
 # Server
@@ -93,8 +131,35 @@ server <- function(input, output, session) {
       )
   })
   
-  observe({
-    message("Filtered rows: ", nrow(filtered_data()))
+  # KPI cards
+  output$kpi_emp6 <- renderUI({
+    df <- filtered_data()
+    val <- if (nrow(df) == 0) "N/A" else
+      paste0(round(mean(df$`Employment_Rate_6_Months (%)`, 
+                        na.rm = TRUE), 
+                   1),
+             "%")
+    kpi_card("Employment Rate (6 months)", val)
+  })
+  
+  output$kpi_emp12 <- renderUI({
+    df <- filtered_data()
+    val <- if (nrow(df) == 0) "N/A" else
+      paste0(round(mean(df$`Employment_Rate_12_Months (%)`, 
+                        na.rm = TRUE), 
+                   1),
+             "%")
+    kpi_card("Employment Rate (1 year)", val)
+  })
+  
+  output$kpi_salary <- renderUI({
+    df <- filtered_data()
+    val <- if (nrow(df) == 0) "N/A" else
+      paste0(round(mean(df$Average_Starting_Salary_USD, 
+                        na.rm = TRUE) / 1000, 
+                   1),
+             "K")
+    kpi_card("Avg Starting Salary (USD)", val)
   })
   
 }
