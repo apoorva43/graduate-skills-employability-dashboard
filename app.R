@@ -69,9 +69,34 @@ ui <- page_sidebar(
 
 # Server
 server <- function(input, output, session) {
-  message("Data loaded: ", nrow(raw_data), " rows, ", ncol(raw_data), " columns")
-  message("Columns: ", paste(names(raw_data), collapse = ",  "))
-  message(year_min, year_max)
+  
+  # Reset button
+  observeEvent(input$reset_btn, {
+    updateSelectInput(session, "region", selected = regions)
+    updateSelectInput(session, "study", selected = studies)
+    updateSelectInput(session, "degree", selected = degrees)
+    updateSelectInput(session, "industry", selected = industries)
+    updateSliderInput(session, "grad_year", 
+                      value = c(year_max - 4, year_max))
+  })
+  
+  # Reactive filtered data
+  filtered_data <- reactive({
+    raw_data |>
+      filter(
+        Graduation_Year >= input$grad_year[1],
+        Graduation_Year <= input$grad_year[2],
+        Region %in% input$region,
+        Field_of_Study %in% input$study,
+        Degree_Level %in% input$degree,
+        Top_Industry %in% input$industry
+      )
+  })
+  
+  observe({
+    message("Filtered rows: ", nrow(filtered_data()))
+  })
+  
 }
 
 shinyApp(ui, server)
