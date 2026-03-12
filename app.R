@@ -16,23 +16,33 @@ year_min <- min(raw_data$Graduation_Year, na.rm = TRUE)
 year_max <- max(raw_data$Graduation_Year, na.rm = TRUE)
 
 # KPI card helper
-kpi_card <- function(title, value) {
+kpi_card <- function(title, value, median_val, q1_val, q3_val) {
   div(
     style = paste0(
       "background:#2196F3;",
       "color:white;",
       "border-radius:16px;",
-      "padding:20px;",
+      "padding:28px;",
       "text-align:center;",
-      "flex:1;"
+      "display:flex;",
+      "flex-direction:column;",
+      "align-items:center;",
+      "justify-content:center;",
+      "min-height:200px;"
     ),
     div(
-      style = "font-size:15px; font-weight:500; margin-bottom:8px;",
+      style = "font-size:20px; font-weight:500; margin-bottom:14px;",
       title
     ),
     div(
-      style = "font-size:36px; font-weight:700; line-height:1.1;",
+      style = "font-size:56px; font-weight:700; line-height:1.1;",
       value
+    ),
+    div(
+      style = "font-size:14px; opacity:0.9; line-height:1.8;",
+      div(paste0("Median: ", median_val)),
+      div(paste0("Bottom 25%: < ", q1_val)),
+      div(paste0("Top 25%: > ", q3_val))
     )
   )
 }
@@ -48,38 +58,42 @@ ui <- page_sidebar(
   ),
   
   sidebar = sidebar(
-    width = 360, # wider sidebar
+    width = 400, # wider sidebar
     
-    selectInput(
+    selectizeInput(
       inputId = "region",
       label = "Region",
       choices = regions,
       selected = regions,
-      multiple = TRUE
+      multiple = TRUE,
+      options = list(plugins = list("remove_button"))
     ),
     
-    selectInput(
+    selectizeInput(
       inputId = "study",
       label = "Field of Study",
       choices = studies,
       selected = studies,
-      multiple = TRUE
+      multiple = TRUE,
+      options = list(plugins = list("remove_button"))
     ),
     
-    selectInput(
+    selectizeInput(
       inputId = "degree",
       label = "Degree Level",
       choices = degrees,
       selected = degrees,
-      multiple = TRUE
+      multiple = TRUE,
+      options = list(plugins = list("remove_button"))
     ),
     
-    selectInput(
+    selectizeInput(
       inputId = "industry",
       label = "Industry",
       choices = industries,
       selected = industries,
-      multiple = TRUE
+      multiple = TRUE,
+      options = list(plugins = list("remove_button"))
     ), 
     
     sliderInput(
@@ -89,7 +103,8 @@ ui <- page_sidebar(
       max = year_max,
       value = c(year_max - 4, year_max),
       step = 1,
-      sep = ""
+      sep = "", 
+      ticks = FALSE
     ),
     
     actionButton("reset_btn", 
@@ -151,32 +166,44 @@ server <- function(input, output, session) {
   # KPI cards
   output$kpi_emp6 <- renderUI({
     df <- filtered_data()
+    col <- df$`Employment_Rate_12_Months (%)`
     val <- if (nrow(df) == 0) "N/A" else
-      paste0(round(mean(df$`Employment_Rate_6_Months (%)`, 
-                        na.rm = TRUE), 
-                   1),
-             "%")
-    kpi_card("Employment Rate (6 months)", val)
+      paste0(round(mean(col, na.rm = TRUE), 1), "%")
+    med <- if (nrow(df) == 0) "N/A" else
+      paste0(round(median(col, na.rm = TRUE), 1), "%")
+    q1 <- if (nrow(df) == 0) "N/A" else
+      paste0(round(quantile(col, 0.25, na.rm = TRUE), 1), "%")
+    q3 <- if (nrow(df) == 0) "N/A" else
+      paste0(round(quantile(col, 0.75, na.rm = TRUE), 1), "%")
+    kpi_card("Employment Rate (6 months)", val, med, q1, q3)
   })
   
   output$kpi_emp12 <- renderUI({
     df <- filtered_data()
+    col <- df$`Employment_Rate_12_Months (%)`
     val <- if (nrow(df) == 0) "N/A" else
-      paste0(round(mean(df$`Employment_Rate_12_Months (%)`, 
-                        na.rm = TRUE), 
-                   1),
-             "%")
-    kpi_card("Employment Rate (1 year)", val)
+      paste0(round(mean(col, na.rm = TRUE), 1), "%")
+    med <- if (nrow(df) == 0) "N/A" else
+      paste0(round(median(col, na.rm = TRUE), 1), "%")
+    q1 <- if (nrow(df) == 0) "N/A" else
+      paste0(round(quantile(col, 0.25, na.rm = TRUE), 1), "%")
+    q3 <- if (nrow(df) == 0) "N/A" else
+      paste0(round(quantile(col, 0.75, na.rm = TRUE), 1), "%")
+    kpi_card("Employment Rate (1 year)", val, med, q1, q3)
   })
   
   output$kpi_salary <- renderUI({
     df <- filtered_data()
+    col <- df$Average_Starting_Salary_USD / 1000
     val <- if (nrow(df) == 0) "N/A" else
-      paste0(round(mean(df$Average_Starting_Salary_USD, 
-                        na.rm = TRUE) / 1000, 
-                   1),
-             "K")
-    kpi_card("Avg Starting Salary (USD)", val)
+      paste0("$", round(mean(col, na.rm = TRUE), 1), "K")
+    med <- if (nrow(df) == 0) "N/A" else
+      paste0("$", round(median(col, na.rm = TRUE), 1), "K")
+    q1 <- if (nrow(df) == 0) "N/A" else
+      paste0("$", round(quantile(col, 0.25, na.rm = TRUE), 1), "K")
+    q3 <- if (nrow(df) == 0) "N/A" else
+      paste0("$", round(quantile(col, 0.75, na.rm = TRUE), 1), "K")
+    kpi_card("Avg Starting Salary (USD)", val, med, q1, q3)
   })
   
   # Industries bar chart
@@ -201,7 +228,11 @@ server <- function(input, output, session) {
       theme_minimal(base_size = 13) +
       theme(
         panel.grid.major.y = element_blank(),
-        axis.text.y = element_text(size = 11)
+        axis.text.y        = element_text(size = 11, color = "#111111"),
+        axis.text.x        = element_text(color = "#111111"),
+        axis.title         = element_text(color = "#111111", size = 12),
+        panel.background   = element_rect(fill = "white", color = NA),
+        plot.background    = element_rect(fill = "white", color = NA)
       )
   })
   
@@ -227,15 +258,19 @@ server <- function(input, output, session) {
       scale_color_brewer(palette = "Set2") +
       labs(
         x     = "Graduation Year",
-        y     = "Average Starting Salary (USD)",
-        color = "Field of Study"
+        y = NULL,
+        color = NULL
       ) +
       theme_minimal(base_size = 13) +
       theme(
-        legend.position  = "top",
-        legend.text      = element_text(size = 10),
-        panel.grid.minor = element_blank(),
-        axis.text.x      = element_text(angle = 45, hjust = 1)
+        legend.position    = "top",
+        legend.text        = element_text(size = 10, color = "#111111"),
+        legend.title       = element_text(color = "#111111"),
+        panel.grid.minor   = element_blank(),
+        axis.text          = element_text(angle = 45, hjust = 1, color = "#111111"),
+        axis.title         = element_text(color = "#111111", size = 12),
+        panel.background   = element_rect(fill = "white", color = NA),
+        plot.background    = element_rect(fill = "white", color = NA)
       )
   })
 }
