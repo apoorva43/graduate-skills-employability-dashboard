@@ -44,6 +44,7 @@ Or open `app.R` in RStudio and click **Run App**.
 ## Repository Structure
 ```
 ├── app.R                        # Main Shiny for R application
+├── manifest.json                # Posit Connect dependency file
 ├── data/
 │   └── processed/
 │       └── processed_data.csv   # Processed graduate employability dataset
