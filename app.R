@@ -221,9 +221,10 @@ server <- function(input, output, session) {
                                    levels = rev(Top_Industry)))
     
     ggplot(industry_summary, 
-           aes(x = avg_salary, y = Top_Industry, fill = Top_Industry)) +
-      geom_col(show.legend = FALSE) +
+           aes(x = avg_salary, y = Top_Industry)) +
+      geom_col(aes(fill = avg_salary), show.legend = FALSE) +
       scale_x_continuous(labels = dollar_format()) +
+      scale_fill_gradient(low = "#90CAF9", high = "#0D47A1") +
       labs(x = "Average Starting Salary (USD)", y = NULL) +
       theme_minimal(base_size = 13) +
       theme(
