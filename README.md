@@ -45,7 +45,7 @@ Or open `app.R` in RStudio and click **Run App**.
 ```
 ├── app.R                        # Main Shiny for R application
 ├── data/
-    └── processed/
+│   └── processed/
 │       └── processed_data.csv   # Processed graduate employability dataset
 └── README.md
 ```

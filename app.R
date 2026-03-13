@@ -166,7 +166,7 @@ server <- function(input, output, session) {
   # KPI cards
   output$kpi_emp6 <- renderUI({
     df <- filtered_data()
-    col <- df$`Employment_Rate_12_Months (%)`
+    col <- df$`Employment_Rate_6_Months (%)`
     val <- if (nrow(df) == 0) "N/A" else
       paste0(round(mean(col, na.rm = TRUE), 1), "%")
     med <- if (nrow(df) == 0) "N/A" else
